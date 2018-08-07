@@ -1,0 +1,59 @@
+version: '3.3'
+
+networks:
+  default:
+  servicebus:
+
+services:
+
+  staging-deps:
+    image: servicebus-agenda-service
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - RABBITMQ_HOST=rabbitmq
+      - REDIS_HOST=redis
+      - MONGODB_HOST=mongo
+      - DEBUG=servicebus*,register-handlers*
+      - LOG_LEVEL=10
+    networks:
+      - servicebus
+      - default
+    depends_on:
+      - redis
+      - rabbitmq
+
+  rabbitmq:
+    image: rabbitmq:3.6-management
+    hostname: rabbitmq
+    networks:
+      - servicebus
+    ports:
+      - 15672:15672
+
+  redis:
+    image: redis
+    networks:
+      - servicebus
+
+  mongo:
+    image: mongo
+    networks:
+      - default
+
+  # reinstall dev deps to get testing tools and run staging tests
+  staging:
+    image: node:10
+    volumes:
+      - ..:/usr/src/service
+    working_dir: /usr/src/service
+    networks:
+      - servicebus
+      - default
+    environment:
+      - apiUrl=http://staging-deps:3000
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DEBUG=$DEBUG
+    command: npm run test:staging

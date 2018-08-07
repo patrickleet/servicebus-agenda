@@ -1,0 +1,48 @@
+{
+  "name": "servicebus-agenda-service",
+  "version": "0.0.1",
+  "description": "servicebus-agenda-service",
+  "bin": {
+    "healthcheck": "./bin/healthcheck.mjs",
+    "start": "./bin/start.mjs"
+  },
+  "scripts": {
+    "start": "node --experimental-modules ./bin/start.mjs | json-stream-formatter --format 'microservice: {{time|date(\"h:m:s\")|blue}}: {{msg|green}}'",
+    "lint": "eslint bin lib handlers --ext=.js,.mjs",
+    "lint:fix": "eslint --fix bin lib handlers __tests__ --ext=.js,.mjs",
+    "test": "jest --config jest.json --coverage --verbose",
+    "test:staging": "DEBUG=servicebus-agenda-service jest --config jest.staging.json --verbose --forceExit",
+    "test:watch": "jest --config jest.json --watch --coverage --verbose",
+    "precommit": "npm run lint"
+  },
+  "dependencies": {
+    "agenda": "^2.0.0",
+    "bluebird": "^3.5.1",
+    "cconfig": "^1.2.4",
+    "errortrap": "^1.0.2",
+    "json-beautify": "^1.0.1",
+    "llog": "^0.1.1",
+    "nodemailer": "^4.6.7",
+    "pino": "^4.17.3",
+    "servicebus-bus-common": "^1.2.1",
+    "servicebus-register-handlers": "^0.1.12"
+  },
+  "devDependencies": {
+    "babel-jest": "^23.0.1",
+    "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-preset-env": "^1.7.0",
+    "debug": "^3.1.0",
+    "eslint": "^5.0.0",
+    "eslint-config-standard": "^11.0.0",
+    "eslint-plugin-import": "^2.12.0",
+    "eslint-plugin-node": "^6.0.1",
+    "eslint-plugin-promise": "^3.8.0",
+    "eslint-plugin-standard": "^3.1.0",
+    "husky": "^0.14.3",
+    "jest": "^23.1.0",
+    "json-stream-formatter": "0.0.9",
+    "readable-id-mjs": "^1.0.0"
+  },
+  "license": "ISC",
+  "snyk": true
+}

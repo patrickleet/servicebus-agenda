@@ -1,0 +1,81 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "fullname" . }}
+  labels:
+    draft: {{ default "draft-app" .Values.draft }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+spec:
+  replicas: {{ .Values.replicaCount }}
+  template:
+    metadata:
+      labels:
+        draft: {{ default "draft-app" .Values.draft }}
+        app: {{ template "fullname" . }}
+{{- if .Values.podAnnotations }}
+      annotations:
+{{ toYaml .Values.podAnnotations | indent 8 }}
+{{- end }}
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        env:
+        - name: DEBUG
+          value: ""
+        - name: NODE_ENV
+          value: {{ default "production" .Values.node.env | quote }}
+        - name: MONGODB_HOST
+          value: {{ template "mongodb.fullname" . }}
+        - name: MONGODB_PORT
+          value: "27017"
+        - name: MONGODB_USERNAME
+          value: {{ default "" .Values.mongodb.username | quote }}
+        - name: MONGODB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "mongodb.fullname" . }}
+              key: mongodb-password
+        - name: MONGODB_DATABASE
+          value: {{ default "" .Values.mongodb.database | quote }}
+        - name: RABBITMQ_HOST
+          value: {{ template "rabbitmq.fullname" . }}
+        - name: RABBITMQ_PORT
+          value: {{ default 5672  .Values.servicebus.rabbitmq.port | quote }}
+        - name: RABBITMQ_USER
+          value: {{ default "user" .Values.servicebus.rabbitmq.user | quote }}
+        - name: RABBITMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: jx-staging-rabbitmq
+              key: rabbitmq-password
+        - name: REDIS_HOST
+          value: {{ template "redis.host" . }}
+        - name: REDIS_PORT
+          value: {{ default 6379 .Values.servicebus.redis.port | quote }}
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: jx-staging-redis
+              key: redis-password
+        ports:
+        - containerPort: {{ .Values.service.internalPort }}
+        livenessProbe:
+          exec:
+            command:
+            - healthcheck
+          initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+          successThreshold: {{ .Values.livenessProbe.successThreshold }}
+          timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+        readinessProbe:
+          exec:
+            command:
+            - healthcheck
+          periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+          successThreshold: {{ .Values.readinessProbe.successThreshold }}
+          timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+        resources:
+{{ toYaml .Values.resources | indent 12 }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
